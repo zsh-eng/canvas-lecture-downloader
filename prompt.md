@@ -22,7 +22,6 @@ Take the input SRT file and output a cleaned version that:
 - If a subtitle becomes empty after cleaning, keep just a period: "."
 - Keep subtitle text concise - if cleaning makes it very long, prioritize clarity
 
-Output ONLY the cleaned SRT file with no additional commentary, explanation, or markdown code blocks.
 
 ## Examples
 
@@ -56,4 +55,9 @@ AFTER:
 00:06:45,000 --> 00:06:47,200
 .
 
-## Input
+<input>
+    
+</input>
+
+
+Output ONLY the cleaned SRT file with no additional commentary, explanation, or markdown code blocks.
