@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
-
 import { google } from "@ai-sdk/google";
 import { generateText } from "ai";
+import { readFileSync } from "fs";
 
 async function main() {
   // Parse command line arguments
@@ -11,7 +11,16 @@ async function main() {
   // Parse --prompt-template argument
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--prompt-template" && i + 1 < args.length) {
-      promptTemplate = args[i + 1];
+      const templatePath = args[i + 1];
+      try {
+        promptTemplate = readFileSync(templatePath, "utf-8");
+      } catch (error) {
+        console.error(
+          `Error: Could not read prompt template file: ${templatePath}`,
+          error,
+        );
+        process.exit(1);
+      }
       break;
     }
   }

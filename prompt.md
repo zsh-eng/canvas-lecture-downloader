@@ -23,40 +23,8 @@ Take the input SRT file and output a cleaned version that:
 - Keep subtitle text concise - if cleaning makes it very long, prioritize clarity
 
 
-## Examples
-
-BEFORE:
-45
-00:02:15,200 --> 00:02:19,440
-Um, so basically, uh, what we're going to do is, yeah, we're going to look at threads.
-
-AFTER:
-45
-00:02:15,200 --> 00:02:19,440
-What we're going to do is look at threads.
-
-BEFORE:
-78
-00:04:32,100 --> 00:04:38,500
-So you you you notice here that, um, the the program, basically the program executes, right?
-
-AFTER:
-78
-00:04:32,100 --> 00:04:38,500
-You notice here that the program executes.
-
-BEFORE:
-112
-00:06:45,000 --> 00:06:47,200
-Yeah. Okay. So.
-
-AFTER:
-112
-00:06:45,000 --> 00:06:47,200
-.
-
 <input>
-    
+{{ input }}
 </input>
 
 
