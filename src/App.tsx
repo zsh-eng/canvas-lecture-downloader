@@ -4,6 +4,7 @@ import {
   formatTime,
   type Subtitle,
 } from "./lib/srt-parser";
+import { ThumbnailStrip } from "./components/ThumbnailStrip";
 
 function App() {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
@@ -118,7 +119,7 @@ function App() {
         onDrop={handleDrop}
         onDragOver={handleDragOver}
       >
-        <div className="border-2 border-dashed border-border rounded-xl p-16 text-center max-w-lg">
+        <div className="glass squircle rounded-3xl p-16 text-center max-w-lg shadow-lg">
           <div className="text-4xl mb-4">🎬</div>
           <h1 className="text-xl font-semibold mb-2">Lecture Viewer</h1>
           <p className="text-muted-foreground mb-4">
@@ -145,7 +146,7 @@ function App() {
         </div>
 
         {/* Video */}
-        <div className="flex-1 bg-black rounded-lg overflow-hidden flex items-center justify-center min-h-0">
+        <div className="flex-1 bg-black rounded-lg squircle overflow-hidden flex items-center justify-center min-h-0">
           <video
             ref={videoRef}
             src={videoUrl}
@@ -155,6 +156,16 @@ function App() {
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
             onClick={togglePlayPause}
+          />
+        </div>
+
+        {/* Thumbnail Strip */}
+        <div className="mt-4">
+          <ThumbnailStrip
+            videoUrl={videoUrl}
+            duration={duration}
+            currentTime={currentTime}
+            onSeek={seekTo}
           />
         </div>
 
@@ -182,7 +193,7 @@ function App() {
           <div className="flex items-center gap-4">
             <button
               onClick={togglePlayPause}
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:opacity-90"
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-md squircle hover:opacity-90"
             >
               {isPlaying ? "Pause" : "Play"}
             </button>
@@ -193,7 +204,7 @@ function App() {
                 <button
                   key={rate}
                   onClick={() => handlePlaybackRateChange(rate)}
-                  className={`px-2 py-1 text-sm rounded ${
+                  className={`px-2 py-1 text-sm rounded squircle ${
                     playbackRate === rate
                       ? "bg-primary text-primary-foreground"
                       : "bg-secondary text-secondary-foreground hover:bg-accent"
@@ -213,8 +224,8 @@ function App() {
       </div>
 
       {/* Right: Transcript */}
-      <div className="w-96 border-l border-border flex flex-col">
-        <div className="p-4 border-b border-border">
+      <div className="w-96 glass flex flex-col">
+        <div className="p-4">
           <h2 className="font-semibold">Transcript</h2>
           {subtitles.length > 0 && (
             <p className="text-sm text-muted-foreground">
@@ -242,9 +253,9 @@ function App() {
                   key={subtitle.id}
                   ref={isActive ? activeSubtitleRef : null}
                   onClick={() => seekTo(subtitle.startTime)}
-                  className={`p-2 rounded cursor-pointer transition-colors ${
+                  className={`p-2 rounded squircle cursor-pointer transition-colors ${
                     isActive
-                      ? "bg-primary/10 border-l-2 border-primary"
+                      ? "bg-primary/15"
                       : "hover:bg-accent"
                   }`}
                 >
