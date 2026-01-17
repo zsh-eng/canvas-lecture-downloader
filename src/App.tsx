@@ -1,9 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import {
-  parseSRT,
-  formatTime,
-  type Subtitle,
-} from "./lib/srt-parser";
+import { parseSRT, formatTime, type Subtitle } from "./lib/srt-parser";
 import { ThumbnailStrip } from "./components/ThumbnailStrip";
 import { VideoSlider } from "./components/VideoSlider";
 
@@ -21,7 +17,7 @@ function App() {
   const activeSubtitleRef = useRef<HTMLDivElement>(null);
 
   const currentSubtitleIndex = subtitles.findIndex(
-    (sub) => currentTime >= sub.startTime && currentTime <= sub.endTime
+    (sub) => currentTime >= sub.startTime && currentTime <= sub.endTime,
   );
 
   // Auto-scroll to current subtitle
@@ -70,7 +66,7 @@ function App() {
         }
       }
     },
-    [handleVideoFile, handleSrtFile]
+    [handleVideoFile, handleSrtFile],
   );
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -230,7 +226,9 @@ function App() {
       {/* Right: Transcript */}
       <div className="w-96 glass flex flex-col">
         <div className="p-4">
-          <h2 className="font-semibold">Transcript</h2>
+          <h2 className="font-semibold text-muted-foreground text-xs tracking-wide uppercase">
+            Transcript
+          </h2>
           {subtitles.length > 0 && (
             <p className="text-sm text-muted-foreground">
               {subtitles.length} subtitles
@@ -258,9 +256,7 @@ function App() {
                   ref={isActive ? activeSubtitleRef : null}
                   onClick={() => seekTo(subtitle.startTime)}
                   className={`p-2 rounded squircle cursor-pointer transition-colors ${
-                    isActive
-                      ? "bg-primary/15"
-                      : "hover:bg-accent"
+                    isActive ? "bg-primary/15" : "hover:bg-accent"
                   }`}
                 >
                   <span className="text-xs text-muted-foreground mr-2">
