@@ -1,75 +1,83 @@
-# React + TypeScript + Vite
+# Canvas Lecture Downloader
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Tools for downloading and processing lecture videos from Canvas/Panopto.
 
-Currently, two official plugins are available:
+## Prerequisites
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- [Bun](https://bun.sh)
+- [ffmpeg](https://ffmpeg.org) (for video downloading)
+- [parakeet-mlx](https://github.com/senstella/parakeet-mlx) (for transcription)
+- Chrome browser (for Panopto authentication)
 
-## React Compiler
-
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
-
-Note: This will impact Vite dev & build performances.
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+bun install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Usage
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### 1. Download video from Panopto
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+bun scripts/panopto-dl.ts <panopto-url> [output-path]
+```
+
+**Important:** Do NOT wrap the URL in quotes.
+
+```bash
+# Correct
+bun scripts/panopto-dl.ts https://mediaweb.ap.panopto.com/Panopto/Pages/Viewer.aspx?id=abc123 output/lecture.mp4
+
+# Wrong - don't use quotes
+bun scripts/panopto-dl.ts "https://mediaweb.ap.panopto.com/..." output/lecture.mp4
+```
+
+On first run, a browser window may open for authentication. Login credentials are persisted in `~/.panopto-dl/browser-data`.
+
+### 2. Transcribe video to SRT
+
+Use parakeet-mlx to generate subtitles:
+
+```bash
+parakeet output/lecture.mp4 -o output/lecture.srt
+```
+
+### 3. Convert SRT to readable markdown
+
+Extract text from SRT (grouped into paragraphs based on speech pauses):
+
+```bash
+bun scripts/srt-to-text.ts output/lecture.srt
+```
+
+Options:
+- `--gap <seconds>` - Pause threshold for paragraph breaks (default: 2.0)
+
+Pipe through Gemini to clean up and format as markdown:
+
+```bash
+bun scripts/srt-to-text.ts output/lecture.srt | bun scripts/gemini-cli.ts --prompt-template prompt-markdown.md > output/lecture.md
+```
+
+### 4. Using gemini-cli directly
+
+The `gemini-cli` script pipes stdin through Gemini with an optional prompt template:
+
+```bash
+echo "Hello world" | bun scripts/gemini-cli.ts
+cat input.txt | bun scripts/gemini-cli.ts --prompt-template my-prompt.md > output.txt
+```
+
+Requires `GOOGLE_GENERATIVE_AI_API_KEY` environment variable.
+
+## Full workflow example
+
+```bash
+# Download
+bun scripts/panopto-dl.ts https://mediaweb.ap.panopto.com/Panopto/Pages/Viewer.aspx?id=abc123 output/lecture-01.mp4
+
+# Transcribe
+parakeet output/lecture-01.mp4 -o output/lecture-01.srt
+
+# Convert to readable markdown
+bun scripts/srt-to-text.ts output/lecture-01.srt | bun scripts/gemini-cli.ts --prompt-template prompt-markdown.md > output/lecture-01.md
 ```
