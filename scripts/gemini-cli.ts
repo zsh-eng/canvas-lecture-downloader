@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 import { google } from "@ai-sdk/google";
-import { generateText } from "ai";
+import { streamText } from "ai";
 import { readFileSync } from "fs";
 
 async function main() {
@@ -45,14 +45,16 @@ async function main() {
   }
 
   try {
-    // Call Gemini API
-    const { text } = await generateText({
+    // Call Gemini API with streaming
+    const { textStream } = streamText({
       model: google("gemini-3-flash-preview"),
       prompt: prompt,
     });
 
-    // Output to stdout
-    process.stdout.write(text);
+    // Stream output to stdout
+    for await (const textPart of textStream) {
+      process.stdout.write(textPart);
+    }
   } catch (error) {
     console.error("Error calling Gemini API:", error);
     process.exit(1);
