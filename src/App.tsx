@@ -165,6 +165,8 @@ function App() {
             videoUrl={videoUrl}
             duration={duration}
             currentTime={currentTime}
+            isPlaying={isPlaying}
+            playbackRate={playbackRate}
             onSeek={seekTo}
           />
         </div>
