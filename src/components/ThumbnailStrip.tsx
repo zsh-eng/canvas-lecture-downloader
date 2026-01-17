@@ -82,6 +82,13 @@ export function ThumbnailStrip({
   const scrubExitTimerRef = useRef<number | undefined>(undefined);
   const scrubTimeRef = useRef<number>(currentTime); // Keep ref in sync for wheel handler
 
+  // Refs for DOM manipulation (bypassing React re-renders during playback)
+  const playheadRef = useRef<HTMLDivElement>(null);
+  const progressOverlayRef = useRef<HTMLDivElement>(null);
+
+  // Counter to trigger animation restart on seek
+  const [seekVersion, setSeekVersion] = useState(0);
+
   useEffect(() => {
     if (!videoUrl || !duration) return;
 
@@ -123,6 +130,62 @@ export function ThumbnailStrip({
     }
   }, [currentTime, isScrubbing]);
 
+  // Animation setup effect - controls playhead and progress overlay via refs
+  // This effect deliberately does NOT depend on currentTime to avoid restarting animation
+  useEffect(() => {
+    const playhead = playheadRef.current;
+    const progressOverlay = progressOverlayRef.current;
+    if (!playhead || !progressOverlay || !duration) return;
+
+    if (isPlaying && !isScrubbing) {
+      // Use scrubTimeRef for accurate position (handles post-scrub handoff)
+      const startTime = scrubTimeRef.current;
+      const remainingTime = (duration - startTime) / playbackRate;
+
+      // Animate to 100% over remaining duration
+      playhead.style.transition = `left ${remainingTime}s linear`;
+      playhead.style.left = "100%";
+
+      progressOverlay.style.transition = `width ${remainingTime}s linear`;
+      progressOverlay.style.width = "100%";
+    } else {
+      // Static positioning - no transition
+      const percent = `${(scrubTimeRef.current / duration) * 100}%`;
+
+      playhead.style.transition = "none";
+      playhead.style.left = percent;
+
+      progressOverlay.style.transition = "none";
+      progressOverlay.style.width = percent;
+    }
+  }, [isPlaying, isScrubbing, playbackRate, duration, seekVersion]);
+
+  // Update static position when not playing (for timeupdate during pause, etc.)
+  useEffect(() => {
+    if (isPlaying && !isScrubbing) return; // Animation handles this
+
+    const playhead = playheadRef.current;
+    const progressOverlay = progressOverlayRef.current;
+    if (!playhead || !progressOverlay || !duration) return;
+
+    const percent = `${(currentTime / duration) * 100}%`;
+    playhead.style.left = percent;
+    progressOverlay.style.width = percent;
+  }, [currentTime, duration, isPlaying, isScrubbing]);
+
+  // Update position during scrubbing (from scrubTime state)
+  useEffect(() => {
+    if (!isScrubbing) return;
+
+    const playhead = playheadRef.current;
+    const progressOverlay = progressOverlayRef.current;
+    if (!playhead || !progressOverlay || !duration) return;
+
+    const percent = `${(scrubTime / duration) * 100}%`;
+    playhead.style.left = percent;
+    progressOverlay.style.width = percent;
+  }, [scrubTime, duration, isScrubbing]);
+
   // Wheel event handler for horizontal scroll scrubbing
   const handleWheel = useCallback(
     (e: WheelEvent) => {
@@ -159,6 +222,8 @@ export function ThumbnailStrip({
         // Final seek to ensure we land on the exact scrubbed position
         onSeek(scrubTimeRef.current);
         setIsScrubbing(false);
+        // Trigger animation restart from scrubbed position
+        setSeekVersion((v) => v + 1);
       }, SCRUB_EXIT_DELAY_MS);
     },
     [duration, onSeek],
@@ -183,12 +248,18 @@ export function ThumbnailStrip({
     const rect = containerRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const percent = x / rect.width;
-    onSeek(percent * duration);
+    const newTime = percent * duration;
+
+    // Update scrubTimeRef so animation starts from correct position
+    scrubTimeRef.current = newTime;
+    onSeek(newTime);
+
+    // Trigger animation restart
+    setSeekVersion((v) => v + 1);
   };
 
-  // Use scrubTime during scrubbing, currentTime otherwise
-  const displayTime = isScrubbing ? scrubTime : currentTime;
-  const progressPercent = duration ? (displayTime / duration) * 100 : 0;
+  // Initial position for SSR/first render
+  const initialPercent = duration ? (currentTime / duration) * 100 : 0;
 
   return (
     <div
@@ -221,30 +292,18 @@ export function ThumbnailStrip({
           ))}
       </div>
 
-      {/* Progress overlay */}
+      {/* Progress overlay - position controlled via ref */}
       <div
+        ref={progressOverlayRef}
         className="absolute inset-y-0 left-0 bg-black/40 pointer-events-none"
-        style={{
-          width: `${progressPercent}%`,
-          transition:
-            isPlaying && !isScrubbing
-              ? `width ${(duration - displayTime) / playbackRate}s linear`
-              : "none",
-        }}
+        style={{ width: `${initialPercent}%` }}
       />
 
-      {/* Playhead */}
+      {/* Playhead - position controlled via ref */}
       <div
+        ref={playheadRef}
         className="absolute inset-y-0 w-1 bg-primary rounded-full shadow-lg pointer-events-none"
-        style={{
-          left: `${progressPercent}%`,
-          // During playback: smooth linear animation to end
-          // During scrubbing or paused: no transition (direct tracking)
-          transition:
-            isPlaying && !isScrubbing
-              ? `left ${(duration - displayTime) / playbackRate}s linear`
-              : "none",
-        }}
+        style={{ left: `${initialPercent}%` }}
       />
     </div>
   );

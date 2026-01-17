@@ -5,6 +5,7 @@ import {
   type Subtitle,
 } from "./lib/srt-parser";
 import { ThumbnailStrip } from "./components/ThumbnailStrip";
+import { VideoSlider } from "./components/VideoSlider";
 
 function App() {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
@@ -178,14 +179,15 @@ function App() {
             <span className="text-sm text-muted-foreground w-16">
               {formatTime(currentTime)}
             </span>
-            <input
-              type="range"
-              min={0}
-              max={duration || 100}
-              value={currentTime}
-              onChange={(e) => seekTo(parseFloat(e.target.value))}
-              className="flex-1 h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
-            />
+            <div className="flex-1">
+              <VideoSlider
+                duration={duration}
+                currentTime={currentTime}
+                isPlaying={isPlaying}
+                playbackRate={playbackRate}
+                onSeek={seekTo}
+              />
+            </div>
             <span className="text-sm text-muted-foreground w-16 text-right">
               {formatTime(duration)}
             </span>
